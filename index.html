@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line of Balance (LOB) 圖表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #444;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: #ffffff;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.875em;
+        }
+        #task-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #task-list li {
+            background: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        canvas {
+            margin-top: 30px;
+            background: #f0f4f8;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            width: 100%; /* 將寬度設置為 100% */
+            height: auto; /* 保持自適應高度 */
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .button-container button {
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            flex: 1;
+        }
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Line of Balance (LOB) 圖表</h1>
+        
+        <div class="form-group">
+            <label for="project-name">工程名稱</label>
+            <input type="text" id="project-name" placeholder="輸入工程名稱">
+        </div>
+        
+        <div class="form-group">
+            <label for="work-crews">工班數</label>
+            <input type="number" id="work-crews" value="1" min="1">
+            <span id="work-crews-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="task-name">工作名稱</label>
+            <input type="text" id="task-name" placeholder="輸入工作名稱">
+            <span id="task-name-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="task-duration">完成一層所需的時間（天）</label>
+            <input type="number" id="task-duration" placeholder="輸入時間">
+            <span id="task-duration-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="task-layers">總層數</label>
+            <input type="number" id="task-layers" placeholder="輸入層數">
+            <span id="task-layers-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="task-dependencies">前置作業（如有多項前置作業，以空格分隔）</label>
+            <input type="text" id="task-dependencies" placeholder="輸入前置作業">
+        </div>
+        
+        <div class="form-group">
+            <label for="task-delay">延時（天）（如為首項作業，請以實際延時天數除以二輸入）</label>
+            <input type="number" id="task-delay" value="0">
+            <span id="task-delay-error" class="error-message"></span>
+        </div>
+        
+        <div class="button-container">
+            <button onclick="initWorkCrews()">鎖定工班數</button>
+            <button onclick="addTask()">添加工作</button>
+            <button id="export-pdf-button">匯出為 PDF</button>
+        </div>
+        
+        <div id="task-list">
+            <h2>已添加的工作</h2>
+        </div>
+        
+        <div class="chart-title" id="chart-title">工程名稱：未設定</div>
+        <canvas id="lob-chart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
