@@ -262,9 +262,9 @@ function topoSort(tasks, dependencies) {
 
     return sortedTasks;
 }
-
-// 根據延遲時間初始化開始時間
+// 計算任務的開始時間（考慮延時）
 function calculateStartTimes(sortedTasks) {
+    // 初始化所有任務的開始時間為0
     startTimes = new Array(tasks.length).fill(0);
 
     sortedTasks.forEach((task, index) => {
@@ -273,23 +273,23 @@ function calculateStartTimes(sortedTasks) {
         var maxDependencyEndTime = 0;
 
         dependenciesForTask.forEach(dep => {
-            var depIndex = sortedTasks.indexOf(dep);
-            var depTaskIndex = tasks.indexOf(dep);
+            var depIndex = tasks.indexOf(dep);
             var depStartTime = startTimes[depIndex];
-            var depDuration = durations[depTaskIndex];
-            var depLayers = layers[depTaskIndex];
-            var depDelay = delays[depTaskIndex]; // 獲取前置任務的延遲
-            var depEndTime = depStartTime + (depDuration * depLayers) + depDelay; // 加上延遲
+            var depDuration = durations[depIndex];
+            var depLayers = layers[depIndex];
+            var depEndTime = depStartTime + (depDuration * depLayers); // 不包含延時
 
+            // 更新最晚前置任務的結束時間
             if (depEndTime > maxDependencyEndTime) {
                 maxDependencyEndTime = depEndTime;
             }
         });
 
-        // 計算當前任務的開始時間，考慮工班數和延遲
-        startTimes[index] = Math.max(startTimes[index], maxDependencyEndTime) + delays[taskIndex];
+        // 當前任務的開始時間等於最晚前置任務的結束時間，再加上當前任務的延時
+        startTimes[taskIndex] = maxDependencyEndTime + delays[taskIndex];
     });
 }
+
 
 // 匯出圖表為 PDF
 document.getElementById('export-pdf-button').addEventListener('click', function() {
