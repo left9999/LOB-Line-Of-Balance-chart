@@ -114,7 +114,22 @@
             <input type="number" id="work-crews" value="1" min="1">
             <span id="work-crews-error" class="error-message"></span>
         </div>
+
+        <div class="form-group">
+            <button onclick="initWorkCrews()">鎖定工班數</button>
+        </div>  
+
+        <div class="form-group">
+            <label for="max-delay">最大延時天數</label>
+            <input type="number" id="max-delay" value="0">
+            <span id="max-delay-error" class="error-message"></span>
+        </div>
+        <div id="delay-warning" style="color: red; font-weight: bold; display: none;"></div>
         
+        <div class="form-group">
+            <button onclick="setMaxDelayDays()">鎖定最大延時天數</button>
+        </div>  
+
         <div class="form-group">
             <label for="task-name">工作名稱</label>
             <input type="text" id="task-name" placeholder="輸入工作名稱">
@@ -142,10 +157,9 @@
             <label for="task-delay">延時（天）</label>
             <input type="number" id="task-delay" value="0">
             <span id="task-delay-error" class="error-message"></span>
-        </div>
+        </div>      
         
         <div class="button-container">
-            <button onclick="initWorkCrews()">鎖定工班數</button>
             <button onclick="addTask()">添加工作</button>
             <button id="export-pdf-button">匯出為 PDF</button>
         </div>

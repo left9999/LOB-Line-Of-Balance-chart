@@ -9,6 +9,7 @@ var workCrews = 1; // 初始工班數為1，並在一開始設定後無法再更
 var lobChart;
 var actualData = {}; // 用來存儲實際進度數據的對象
 var projectName = ''; // 用來存儲工程名稱的變量
+var maxDelay = 0; // 最大延時天數
 
 // 初始化工班數設定，選擇後不可更改
 function initWorkCrews() {
@@ -30,24 +31,40 @@ function setProjectName() {
     }
 }
 
+function setMaxDelay() {
+    var maxDelayInput = document.getElementById('max-delay');
+    maxDelay = parseInt(maxDelayInput.value, 10) || 0;
+    maxDelayInput.disabled = true; // 設定後不可更改
+}
+
+function checkTotalDelays() {
+    // 取得最大延時天數
+    var maxDelayInput = document.getElementById('max-delay');
+    var maxDelay = parseInt(maxDelayInput.value, 10) || 0;
+
+    // 計算所有工作項目的總延時數量
+    var totalDelays = delays.reduce((sum, delay) => sum + delay, 0);
+
+    // 取得警告訊息顯示的區域
+    var delayWarning = document.getElementById('delay-warning');
+}
+
 // 添加任務功能
 function addTask() {
     var taskInput = document.getElementById('task-name');
     var durationInput = document.getElementById('task-duration');
     var layersInput = document.getElementById('task-layers');
     var dependencyInput = document.getElementById('task-dependencies');
-    var delayInput = document.getElementById('task-delay'); // 新增延遲輸入
+    var delayInput = document.getElementById('task-delay');
 
     var taskName = taskInput.value.trim();
     var duration = parseInt(durationInput.value, 10);
     var totalLayers = parseInt(layersInput.value, 10);
     var taskDependencies = dependencyInput.value.split(/\s+/).filter(dep => dep !== "");
-    var delay = parseInt(delayInput.value, 10) || 0; // 確保延遲值有效
+    var delay = parseInt(delayInput.value, 10) || 0;
 
-    // 清除錯誤訊息
     clearErrors();
 
-    // 錯誤處理
     if (taskName === '') {
         showError('task-name', '請輸入有效的工作名稱。');
         return;
@@ -61,16 +78,14 @@ function addTask() {
         return;
     }
 
-    // 將任務添加到列表中
     tasks.push(taskName);
     durations.push(duration);
     layers.push(totalLayers);
     dependencies.push(taskDependencies);
-    delays.push(delay); // 添加延遲時間
+    delays.push(delay);
     startTimes.push(null);
-    actualData[taskName] = []; // 初始化實際進度數據
+    actualData[taskName] = [];
 
-    // 清空輸入框
     taskInput.value = '';
     durationInput.value = '';
     layersInput.value = '';
@@ -78,6 +93,7 @@ function addTask() {
     delayInput.value = '';
 
     updateTaskList();
+    checkTotalDelays(); // 檢查延時情況
     if (tasks.length > 0) {
         calculateStartTimes(tasks);
         updateChart();
@@ -88,9 +104,42 @@ function addTask() {
 function updateTaskList() {
     var taskListDiv = document.getElementById('task-list');
     taskListDiv.innerHTML = '<h2>已添加的工作</h2><ul>';
+
+    // 計算所有工作項目的總延時
+    var totalDelays = delays.reduce((sum, delay) => sum + delay, 0);
+    var maxDelayInput = document.getElementById('max-delay');
+    var maxDelay = parseInt(maxDelayInput.value, 10) || 0;
+
+    // 判斷是否已達或超過最大延時天數
+    var delayStatusMessage = '';
+    if (totalDelays === maxDelay) {
+        delayStatusMessage = '<span style="color:orange">已達最大延時天數</span>';
+    } else if (totalDelays > maxDelay) {
+        delayStatusMessage = '<span style="color:red">超過最大延時天數</span>';
+    }
+
+    // 計算目前作業總天數
+    var totalTaskDays = 0;
+
     tasks.forEach((task, index) => {
-        taskListDiv.innerHTML += `<li>${task} - 時間: ${durations[index]}, 層數: ${layers[index]}, 延遲: ${delays[index]} 天, 前置作業: ${dependencies[index].join(', ')}</li>`;
+        var taskDuration = durations[index] * layers[index]; // 每項作業的時間乘層數
+        var taskTotalDays = taskDuration + delays[index];    // 加上延時天數
+        totalTaskDays += taskTotalDays;
+
+        var delayText = delays[index] > 0 ? ` 延時: ${delays[index]} 天` : '';
+        var exceedMaxDelay = delays[index] > maxDelay ? '<span style="color:red">（超過最大延時）</span>' : '';
+
+        taskListDiv.innerHTML += `<li>${task} - 時間: ${durations[index]}, 層數: ${layers[index]}, 前置作業: ${dependencies[index].join(', ')}${delayText} ${exceedMaxDelay}</li>`;
     });
+
+    // 顯示達到或超過最大延時天數的狀態
+    if (delayStatusMessage !== '') {
+        taskListDiv.innerHTML += `<p>${delayStatusMessage}</p>`;
+    }
+
+    // 顯示目前作業總天數
+    taskListDiv.innerHTML += `<p><strong>目前作業總天數:</strong> ${totalTaskDays} 天</p>`;
+
     taskListDiv.innerHTML += '</ul>';
 }
 
@@ -129,7 +178,6 @@ function updateChart() {
         };
     });
 
-    // 添加實際數據的數據集
     Object.keys(actualData).forEach((task) => {
         if (actualData[task].length > 0) {
             datasets.push({
@@ -178,6 +226,8 @@ function updateChart() {
             }
         }
     });
+
+    checkTotalDelays(); // 再次檢查延時情況
 }
 
 // 生成時間標籤
@@ -289,7 +339,6 @@ function calculateStartTimes(sortedTasks) {
         startTimes[taskIndex] = maxDependencyEndTime + delays[taskIndex];
     });
 }
-
 
 // 匯出圖表為 PDF
 document.getElementById('export-pdf-button').addEventListener('click', function() {
